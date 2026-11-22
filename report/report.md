@@ -2,7 +2,7 @@
 
 **Course:** CS-251 Design and Analysis of Algorithms, BSDS Semester 7, SEECS NUST
 **Assignment:** 02
-**Group members:** Affan Ahmad Basra (476173), [Teammate name] ([CMS ID])
+**Group members:** Affan Ahmad Basra (476173), Abdur Rafey (481971)
 **Repository:** https://github.com/AffanBasra/foodroute-algo-eval
 
 ---
@@ -520,7 +520,7 @@ this report come from `results/summary_tables.md`.
 | Member | Contribution |
 |---|---|
 | Affan Ahmad Basra | Implemented the sorting and shortest path algorithms, data generators, tests and benchmark scripts. Ran all experiments and produced the charts. |
-| [Teammate name] | Theoretical analysis (complexity tables and recurrences), evaluation criteria and weights, analysis of results, and writing the report. |
+| Abdur Rafey | Theoretical analysis (complexity tables and recurrences), evaluation criteria and weights, analysis of results, and writing the report. |
 
 Both members reviewed the final code and report.
 
