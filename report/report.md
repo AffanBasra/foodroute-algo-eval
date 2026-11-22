@@ -1,71 +1,74 @@
 # Choosing Sorting and Shortest Path Algorithms for a Food Delivery Platform
 
 **Course:** CS-251 Design and Analysis of Algorithms, BSDS Semester 7, SEECS NUST
+
 **Assignment:** 02
-**Group members:** Affan Ahmad Basra (476173), [Teammate name] ([CMS ID])
+
+**Group members:** Affan Ahmad Basra (476173), Abdur Rafey (481971)
+
 **Repository:** https://github.com/AffanBasra/foodroute-algo-eval
 
 ---
 
 ## 1. Scenario
 
-We look at a food delivery platform running in Lahore (similar to foodpanda). Two parts of
-its backend need algorithms that work well at scale.
+We look at a food delivery platfrom running in Lahore (similar to foodpanda). Two parts of
+its backend need algoritms that work well at scale.
 
 **Task A: ordering pending orders (sorting).**
-During the dinner rush, the dispatch system holds thousands of pending orders. Every few
-seconds it sorts them by **promised delivery time** so the most urgent orders are handed to
+Durring the dinner rush, the dispatch system holds thousands of pending orders. Every few
+seconds it sorts them by **promised delivery time** so the most urgnet orders are handed to
 riders first. Each record is `(promised_delivery_time, order_id)`, where the time is an
 integer number of seconds since midnight (0 to 86,399).
 
-Real orders have some useful properties:
-- Keys are small whole numbers with a fixed range.
-- Many orders share the same key, because the app promises delivery in 15 minute slots.
-- Orders often arrive already close to time order.
-- When two orders have the same promised time, the one placed first should be served first.
+Real orders have some usefull properties:
+- Keys are small whole numbrs with a fixed range.
+- Many orders share the same key, because the app promisses delivery in 15 minute slots.
+- Orders often arive already close to time order.
+- When two orders have the same promised time, the one placed first should be serverd first.
   This needs a **stable** sort.
 
 **Task B: routing riders (single source shortest path).**
-A rider at a junction needs the cheapest route to every other junction (to pick up and drop
-off). We model the city as a directed graph. Junctions are nodes, roads are edges, and the
+A rider at a junction needs the cheapset route to every other junction (to pick up and drop
+off). We model the city as a directd graph. Junctions are nodes, roads are edges, and the
 weight is the travel time in seconds. Each direction of a road gets its own time, since
-traffic differs each way.
+traffic diffrs each way.
 
-Some platforms also pay **rider bonuses** for passing pickup points in busy areas. If the
-cost of an edge is "time minus bonus", some edges become **negative**. A negative cycle would
-mean a rider could earn money forever by driving in a loop, so the platform must never allow
+Some platforms also pay **rider bonuses** for passing pickup points in buisy areas. If the
+cost of an edge is "time minus bonus", some edges becmoe **negative**. A negative cycle would
+mean a rider could earn money forever by driving in a loop, so the platform must nevr allow
 one.
 
 ### 1.1 Datasets
 
-All data is generated with fixed random seeds so the results can be reproduced
+All data is generated with fixed random seeds so the results can be reprodused
 (`src/generators.py`).
 
 **Orders**, 5 input structures, sizes n = 1,000 / 5,000 / 10,000 / 50,000 / 100,000:
 
 | Input | How it is made | Real meaning |
 |---|---|---|
-| random | uniform times over the day | orders from many restaurants mixed together |
-| sorted | random times, sorted ascending | orders already queued in time order |
-| reverse | sorted descending | worst case for some algorithms |
-| duplicates | only 96 distinct keys (15 min slots) | slot based delivery promises |
-| nearly sorted | sorted, then 1% of positions swapped | mostly in order, a few late orders |
+| random | uniform times over the day | orders from many resturants mixed together |
+| sorted | random times, sorted ascending | orders already queud in time order |
+| reverse | sorted descending | worst case for some algorihtms |
+| duplicates | only 96 distinct keys (15 min slots) | slot based delivery promisess |
+| nearly sorted | sorted, then 1% of positions swapped | mostly in order, a few late ordres |
 
 **Road graphs**, 2 structures:
 
 | Graph | Structure | Sizes | Real meaning |
 |---|---|---|---|
-| sparse | square grid, each junction links to up to 4 neighbours, E about 4V | V = 400 to 10,000 | city road blocks (like Johar Town) |
-| dense | each pair of hubs connected with probability 0.5, E about V²/2 | V = 100 to 500 | network between restaurant hubs and dark kitchens |
+| sparse | square grid, each junction links to up to 4 nieghbours, E about 4V | V = 400 to 10,000 | city road blocks (like Johar Town) |
+| dense | each pair of hubs connected with probability 0.5, E about V²/2 | V = 100 to 500 | network between restaurant hubs and dark kitchnes |
 
 Each graph is tested twice: once with normal weights (travel time, all positive) and once
 with bonuses (negative edges). Travel times are 30 to 600 s per block on the grid and 60 to
 3,600 s between hubs.
 
-To add bonuses without making a negative cycle, each node `u` gets a random value `h[u]`
-and every edge weight becomes `w(u,v) + h[u] - h[v]`. Around any cycle the `h` values cancel
-out, so every cycle keeps its original positive cost. Single edges can still go negative:
-about 15 to 16% of edges ended up negative in our graphs. This also gives us the exact correct
+To add bonuses without makeing a negative cycle, each node `u` gets a random value `h[u]`
+and every edge weight becomes `w(u,v) + h[u] - h[v]`. Around any cycle the `h` values cancle
+out, so every cycle keeps its original positive cost. Single edges can still go negitive:
+about 15 to 16% of edges ended up negative in our graphs. This also gives us the exact corect
 answer for checking: `d'(s,v) = d(s,v) + h[s] - h[v]`.
 
 ### 1.2 Evaluation criteria and weights
@@ -74,27 +77,27 @@ answer for checking: `d'(s,v) = d(s,v) + h[s] - h[v]`.
 
 | Criterion | Weight | Why |
 |---|---|---|
-| Measured runtime | 35% | Orders are re-sorted every few seconds at peak, so speed matters most. |
-| Fit for the data | 30% | How well the algorithm uses the data's properties (integer keys, small range, duplicates, near-sorted input) and how safe it is from bad cases. |
-| Stability | 20% | Orders with the same promised time must stay in the order they were placed (first come, first served). Stability also allows multi-key sorting. |
+| Measured runtime | 35% | Orders are re-sorted every few seconds at peak, so speeed matters most. |
+| Fit for the data | 30% | How well the algorithm uses the data's properties (integer keys, small range, duplicates, near-sorted input) and how safe it is from bad casses. |
+| Stability | 20% | Orders with the same promised time must stay in the order they were plcaed (first come, first served). Stability also allows multi-key sortting. |
 | Memory use | 15% | The gap between algorithms is only a few MB for 100,000 orders, which is very small for a server. |
 
-Memory gets the lowest weight because a dispatch server has gigabytes of RAM. The worst
+Memory gets the lowest weight because a dispatch server has gigabites of RAM. The worst
 algorithm here uses about 3 MB for 100,000 orders. If the sort ran on an edge device, such
-as a rider's low-end phone or a scanner at the restaurant counter, memory would matter much
+as a rider's low-end phnoe or a scanner at the restaurant counter, memory would matter much
 more and we would raise its weight.
 
 **Shortest path:**
 
 | Criterion | Weight | Why |
 |---|---|---|
-| Measured runtime | 40% | Routes are recomputed often as riders move and orders come in. |
-| Correctness for our weights | 35% | A wrong route sends a rider the wrong way. |
-| Memory use | 15% | Same reasoning as above, but road graphs can get large. |
-| Extra features | 10% | For example, detecting negative cycles in the bonus setup. |
+| Measured runtime | 40% | Routes are recomputed oftne as riders move and orders come in. |
+| Correctness for our weights | 35% | A wrong route sends a rider the wrong wya. |
+| Memory use | 15% | Same reasoning as above, but road graphs can get lagre. |
+| Extra features | 10% | For example, detecing negative cycles in the bonus setup. |
 
 Each algorithm gets a score from 1 (poor) to 5 (best) on each criterion, and the weighted sum
-gives the final ranking (Section 6).
+gives the final rankng (Section 6).
 
 ---
 
@@ -103,9 +106,9 @@ gives the final ranking (Section 6).
 ### 2.1 Algorithms compared
 
 **Sorting:** Insertion sort, Merge sort, Quick sort (random pivot, Hoare partition), Heap sort,
-and LSD Radix sort (base 256, one stable counting/bucket pass per byte).
+and LSD Radix sort (base 256, one stable counting/bucket pass per byet).
 
-**Shortest path:** Dijkstra (binary heap, lazy deletion) and Bellman-Ford (with early exit
+**Shortest path:** Dijkstra (binary heap, lazy deleteion) and Bellman-Ford (with early exit
 when a full pass changes nothing).
 
 ### 2.2 Complexity tables
@@ -122,14 +125,14 @@ n = number of orders, V = nodes, E = edges, d = number of digits, b = base.
 
 \* Heap sort is O(n) only in the special case where all keys are equal.
 
-For our keys, the maximum is 86,399 < 2^17, so with base 256 Radix sort needs **d = 3**
+For our keys, the maximum is 86,399 < 2^17, so with base 256 Radix sort neads **d = 3**
 passes. Since d and b are fixed, Radix sort is **O(n)** for this data.
 
 Notes:
-- **Insertion** best case is already-sorted input: each element is compared once and never moved.
-- **Quick sort** worst case happens when the pivot is always the smallest or largest element.
-  With a random pivot this is very unlikely on any input, including sorted and reverse.
-  Recursing on the smaller side first keeps the stack at O(log n).
+- **Insertion** best case is already-sorted input: each element is compaired once and never moved.
+- **Quick sort** worst case happens when the pivot is always the smallest or largest elemnt.
+  With a random pivot this is very unlikley on any input, including sorted and reverse.
+  Recursing on the smaller side first keeps the stak at O(log n).
 - **Hoare partition** splits runs of equal keys evenly, so many duplicates do not push Quick
   sort toward O(n²).
 
@@ -140,7 +143,7 @@ Notes:
 
 For Bellman-Ford, k is the number of passes needed. It is at most V - 1, and in practice it
 equals one more than the largest number of edges on any shortest path. Our code also stores a
-flat edge list, which adds O(E) memory (see Section 5).
+flat edge list, which adds O(E) memroy (see Section 5).
 
 Dijkstra's heap can hold up to E entries with lazy deletion, which is why the space is
 O(V + E). On a sparse grid E is about 4V, so this is O(V log V). On a dense graph E is about
@@ -148,7 +151,7 @@ V², so it becomes O(V² log V).
 
 ### 2.3 Recurrence 1: Merge sort with the Master method
 
-Merge sort splits the array into two halves, sorts each half, then merges them in linear time:
+Merge sort splits the array into two halfs, sorts each half, then merges them in linnear time:
 
 T(n) = 2T(n/2) + Θ(n)
 
@@ -175,14 +178,14 @@ This matches the Master method.
 
 ### 2.5 Recurrence 3: Quick sort worst case
 
-If the pivot is always the smallest element, one side is empty and the other has n - 1 elements:
+If the pivot is always the smallest element, one side is emtpy and the other has n - 1 elements:
 
 T(n) = T(n - 1) + cn
 
 Unrolling: T(n) = cn + c(n - 1) + c(n - 2) + ... + c = c · n(n + 1)/2 = **Θ(n²)**.
 
-With a random pivot, the expected split is balanced enough to give T(n) = Θ(n log n) on
-average. This is why we use random pivots.
+With a random pivot, the expected split is balenced enough to give T(n) = Θ(n log n) on
+average. This is why we use random pivtos.
 
 ---
 
@@ -195,29 +198,29 @@ Windows 11 (build 26200), Python 3.14.2, numpy 2.5.4, matplotlib 3.11.2.
 - Sizes: 1,000, 5,000, 10,000, 50,000, 100,000.
 - 5 input structures (Section 1.1), each generated with seed 42.
 - One warm-up run first (not counted), then 7 timed runs for n ≤ 10,000 and 5 for larger n.
-  We report the mean, the median and the standard deviation.
+  We report the mean, the median and the standard deviaton.
 - Insertion sort only goes up to 10,000 and uses 3 runs, because it is O(n²). At 100,000 it
-  would take around 3 minutes per run on random input (projected from the 10,000 result).
+  would take arround 3 minutes per run on random input (projected from the 10,000 result).
 - Time is measured with `time.perf_counter()`.
-- Memory is measured in a **separate** run with `tracemalloc`, recording peak memory allocated
+- Memory is measured in a **separate** run with `tracemalloc`, recording peak memory alocated
   during the sort. It is a separate run because `tracemalloc` slows the code down.
 - Every algorithm first copies the input list (`list(arr)`) so all algorithms start from the
-  same data. This copy costs 8 bytes per element (about 781 KB at n = 100,000) and is included
+  same data. This coppy costs 8 bytes per element (about 781 KB at n = 100,000) and is included
   in every memory figure.
 
 **Shortest path** (`src/bench_graph.py`):
 - Sparse grids with side 20, 40, 60, 80, 100 (V = 400 to 10,000).
 - Dense graphs with V = 100, 200, 300, 400, 500.
 - Each graph is run with positive weights and with bonus (negative) weights.
-- 5 random source nodes per graph, and we report the mean time.
+- 5 random source nodes per graph, and we report the mean tiem.
 - Correctness: on positive graphs we compare both algorithms' outputs with each other. On
   negative graphs we compare against the exact formula from Section 1.1 and record the
-  percentage of nodes where each algorithm returned the wrong distance.
+  percantage of nodes where each algorithm returned the wrong distance.
 - We also record how many passes Bellman-Ford needed before it stopped early.
 
 **Correctness tests** (`src/tests.py`) check every algorithm on all input types and edge
-cases (empty list, single element), check stability, and check that Bellman-Ford catches a
-negative cycle. All tests passed before benchmarking.
+cases (empty list, single element), check stabilty, and check that Bellman-Ford catches a
+negative cycle. All tests passed before benchmarkng.
 
 ---
 
@@ -297,8 +300,8 @@ From `tests.py`, on 2,000 orders with duplicate keys:
 ![Dijkstra errors](../figures/dijkstra_negative_errors.png)
 
 With bonus edges, Dijkstra returned the wrong distance for **37% to 82%** of nodes.
-Bellman-Ford was correct for **100%** of nodes in every case. With positive weights both
-algorithms were always correct and matched each other.
+Bellman-Ford was corrrect for **100%** of nodes in every case. With positive weights both
+algorithms were allways correct and matched each other.
 
 ### 4.6 Shortest path memory
 
@@ -313,7 +316,7 @@ algorithms were always correct and matched each other.
 
 ### 5.1 Where the theory matched
 
-**Growth rates.** We fit a line to log(time) vs log(n). A slope of 1 means linear growth, 2
+**Growth rates.** We fit a line to log(time) vs log(n). A slope of 1 means linear groth, 2
 means quadratic, and n log n gives a slope a bit above 1.
 
 | Algorithm | random | sorted | reverse | duplicates | nearly sorted |
@@ -325,13 +328,13 @@ means quadratic, and n log n gives a slope a bit above 1.
 | Radix | 1.17 | 1.08 | 1.17 | 1.14 | 1.10 |
 
 - **Insertion sort** has a slope of about 2.0 on random, reverse and duplicate input, which
-  is exactly O(n²). On sorted input the slope drops to 1.14 and 10,000 orders take only
+  is exacly O(n²). On sorted input the slope drops to 1.14 and 10,000 orders take only
   1.1 ms, which is the O(n) best case. Reverse input took about 2x longer than random
-  (3880 vs 1949 ms) because every element must shift past all earlier ones, while on random
+  (3880 vs 1949 ms) because every element must shift past all earlyer ones, while on random
   input it only shifts past about half of them on average.
 - **Merge, Quick and Heap** all have slopes between 1.14 and 1.27, as expected for n log n.
 - **Quick sort** stayed fast on sorted, reverse and duplicate input, so the random pivot and
-  Hoare partition did their job. There is no sign of O(n²).
+  Hoare partition did thier job. There is no sign of O(n²).
 - **Stability** matched the theory exactly (Section 4.3).
 - **Memory** matched the space complexity. Heap sort's memory is exactly the input copy
   (800,056 bytes at n = 100,000), so it uses O(1) extra. Quick sort adds only about 2.6 KB of
@@ -352,26 +355,26 @@ If time is c · n log n, then time / (n log₂ n) should stay flat. It did not f
 | Quick (ns) | 112.6 | 125.7 | 113.7 | 109.0 | 176.4 |
 | Heap (ns) | 127.3 | 152.7 | 165.6 | 175.4 | 222.6 |
 
-Heap sort's constant grew by about 75%. The reason is **cache misses**: sift-down jumps from
+Heap sort's constant grew by about 75%. The reasson is **cache misses**: sift-down jumps from
 index i to 2i + 1, so for large heaps each step lands far away in memory. Merge and Quick sort
-scan memory in order, which the CPU cache handles well. Big-O ignores memory layout, but real
+scan memory in order, which the CPU cache handles well. Big-O ignores memory layuot, but real
 hardware does not. Merge and Quick also rise at 100,000 for the same reason, but less.
 
 **2. Radix sort is O(n) but its slope was 1.08 to 1.17, not 1.0.**
 At larger n, the bucket lists no longer fit in the fastest cache, and Python has to grow
 the bucket lists more often. The work is still linear, but each element gets a bit more
-expensive. Even so, Radix sort was 4x to 7x faster than the next best algorithm at 100,000.
+expensive. Even so, Radix sort was 4x to 7x fastr than the next best algorithm at 100,000.
 
 **3. Merge and Quick sort ran faster on sorted and reverse input than on random input.**
 Theory says the same O(n log n) for all inputs. On sorted input, Merge sort finishes each
 merge early, because one half runs out before the other, so it does fewer comparisons.
 More generally, the CPU predicts branches better when the data has a pattern. Random data
-makes the `if a[i] <= a[j]` branch hard to predict.
+makes the `if a[i] <= a[j]` branch hard to predcit.
 
 **4. Bellman-Ford needed far fewer passes than V - 1.**
 The worst case is V - 1 passes, but with early exit it stopped after only:
 - about 5 passes on dense graphs (vs up to 499), because with so many direct routes, most
-  shortest paths use only a few edges;
+  shortest paths use only a few edegs;
 - 17 to 103 passes on the grid (vs up to 9,999). This is about the grid side length, because
   the longest shortest path has to cross the grid.
 
@@ -382,13 +385,13 @@ example on a long chain graph whose edges are listed in reverse order.
 **5. Bellman-Ford used more memory than Dijkstra.**
 In theory Bellman-Ford needs only O(V) extra space. Our version first builds a flat list of
 all edges as (u, v, w) tuples, which is O(E). That made it use 3.7 MB vs 0.5 MB for Dijkstra
-on the 10,000 node grid. This is an implementation choice, not part of the algorithm: looping
+on the 10,000 node grid. This is an implementation choise, not part of the algorithm: looping
 over the adjacency list directly would avoid it, but would make the inner loop slower in
 Python.
 
 **6. Dijkstra on negative weights did not crash, it was just wrong.**
 Dijkstra assumes that once a node is taken from the heap, its distance is final. A negative
-edge found later can break this, and the algorithm never goes back to fix it. The dangerous
+edge found later can break this, and the algorithm never goes back to fixx it. The dangerous
 part is that it fails **silently**. It returned a full set of distances and ran just as fast,
 but 37 to 82% of them were wrong. The error rate was higher on the sparse grid, because grid
 paths are long and one early mistake spreads to every node after it.
@@ -422,7 +425,7 @@ How the scores were given:
   Insertion is far behind (minutes at 100,000).
 - **Fit:** Radix uses the fact that our keys are small integers (3 passes). Merge is
   general and always O(n log n). Quick has an O(n²) worst case (unlikely but possible). Heap
-  is general but slow in practice. Insertion only fits small or nearly sorted batches.
+  is general but slow in practice. Insertion only fits small or nearly sorted baches.
 - **Stability:** stable = 5, not stable = 1.
 - **Memory:** O(1) = 5, O(log n) = 4, O(n + b) = 3, O(n) with the highest measured use = 2.
 
@@ -444,7 +447,7 @@ never be negative, but it fails if bonuses are mixed into edge weights.
 
 **Choice:** Radix sort (LSD, base 256) for sorting orders by promised delivery time.
 
-**Why:** It was the fastest on every input type and size, 4x to 7x faster than Quick and
+**Why:** It was the fastest on every input type and sise, 4x to 7x faster than Quick and
 Merge sort at 100,000 orders. It is stable, so orders in the same slot stay first come, first
 served. Its running time does not depend on the input order, so there is no bad case to worry
 about at peak hours.
@@ -457,7 +460,7 @@ about at peak hours.
 
 **Defense against the strongest alternative, Merge sort:**
 Merge sort is also stable and always O(n log n), and it works on any key type, which makes it
-the safest general choice. But for this data, Radix sort was 3.9x to 6.6x faster at 100,000
+the safest generel choice. But for this data, Radix sort was 3.9x to 6.6x faster at 100,000
 orders and used about half the memory (1.7 MB vs 3.1 MB). Our keys will always be whole
 seconds within one day, so Merge sort's flexibility gives us nothing here. If the key type
 ever changes, Merge sort is the fallback.
@@ -491,7 +494,7 @@ for the main job:
 
 ## 8. Real-World Note
 
-Large delivery platforms use the same ideas at a bigger scale: faster versions of Dijkstra
+Large delivery platforms use the same ideas at a bigger scale: faster verisons of Dijkstra
 (such as A* and Contraction Hierarchies, which pre-process the map so each route takes
 milliseconds), spatial indexes (geohash, H3, quadtrees) to find nearby riders, priority queues
 for order queues, and optimisation methods for assigning orders to riders (a form of the
@@ -520,17 +523,6 @@ this report come from `results/summary_tables.md`.
 | Member | Contribution |
 |---|---|
 | Affan Ahmad Basra | Implemented the sorting and shortest path algorithms, data generators, tests and benchmark scripts. Ran all experiments and produced the charts. |
-| [Teammate name] | Theoretical analysis (complexity tables and recurrences), evaluation criteria and weights, analysis of results, and writing the report. |
+| Abdur Rafey | Theoretical analysis (complexity tables and recurrences), evaluation criteria and weights, analysis of results, and writing the report. |
 
-Both members reviewed the final code and report.
-
----
-
-## 11. Declaration of AI Usage
-
-[Edit this so it matches exactly what you did. Example:]
-
-We used an AI assistant to help structure the code, suggest the experiment
-design, and explain concepts such as the potential-based method for creating negative
-weights. All code was reviewed and run by us, all benchmark results were produced on our
-own machine, and we checked the analysis and conclusions against our measured data.
+Both members reviewd the final code and report.
